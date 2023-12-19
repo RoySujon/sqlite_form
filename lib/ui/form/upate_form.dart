@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:sqlite_form/services/form_db_helper.dart';
-import 'package:sqlite_form/ui/form/widgets/custom_text_field.dart';
-import 'package:sqlite_form/ui/form/widgets/custome_buttom.dart';
+import 'package:sqlite_form/models/user_model.dart';
+import 'package:sqlite_form/services/user_db.dart';
+import 'package:sqlite_form/ui/form/const/const.dart';
+import 'package:sqlite_form/ui/form/widgets/custom_text_field_widget.dart';
+import 'package:sqlite_form/ui/form/widgets/custome_buttom_widget.dart';
 import 'package:sqlite_form/ui/home/users_screen.dart';
 
 class UpdateScreen extends StatefulWidget {
-  const UpdateScreen({super.key, required this.id});
-  final int id;
+  const UpdateScreen({super.key, required this.userModel});
+  final UserModel userModel;
   @override
   State<UpdateScreen> createState() => _UpdateScreenState();
 }
@@ -14,23 +16,30 @@ class UpdateScreen extends StatefulWidget {
 class _UpdateScreenState extends State<UpdateScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  _getItem() async {
-    var data = await DBHelper.getUser(id: widget.id);
-    Controller.nameController.text = data[0]['name'].toString();
-    Controller.emailController.text = data[0]['email'].toString();
-    Controller.phoneController.text = data[0]['phone'].toString();
-    Controller.adressController.text = data[0]['adress'].toString();
-    setState(() {});
-  }
+  TextEditingController nameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController adressController = TextEditingController();
+  TextEditingController idController = TextEditingController();
 
-  @override
-  void initState() {
-    _getItem();
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   Controllers.nameController.text = widget.userModel.name!.toString();
+  //   Controllers.emailController.text = widget.userModel.email!.toString();
+  //   Controllers.adressController.text = widget.userModel.adress!.toString();
+  //   Controllers.phoneController.text = widget.userModel.phone!.toString();
+  //   setState(() {});
+  //   // TODO: implement initState
+  //   super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {
+    nameController.text = widget.userModel.name!.toString();
+    emailController.text = widget.userModel.email!.toString();
+    adressController.text = widget.userModel.adress!.toString();
+    phoneController.text = widget.userModel.phone!.toString();
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -61,7 +70,7 @@ class _UpdateScreenState extends State<UpdateScreen> {
                       CustomeTextFieldForm(
                         hintText: "Enter your Name",
                         suffixIcon: Icons.person,
-                        controller: Controller.nameController,
+                        controller: nameController,
                         validator: (value) => value!.trim().isEmpty
                             ? 'Enter Your Name'
                             : !Validate.nameRegExp.hasMatch(value)
@@ -69,7 +78,7 @@ class _UpdateScreenState extends State<UpdateScreen> {
                                 : null,
                       ),
                       CustomeTextFieldForm(
-                        validator: (String? value) {
+                        validator: (value) {
                           if (value!.trim().isEmpty) {
                             return 'enter the Email';
                           } else if (!Validate.emailRegExp.hasMatch(value)) {
@@ -79,7 +88,7 @@ class _UpdateScreenState extends State<UpdateScreen> {
                         },
                         hintText: "Enter your Email",
                         suffixIcon: Icons.email,
-                        controller: Controller.emailController,
+                        controller: emailController,
                       ),
                       CustomeTextFieldForm(
                         validator: (value) => value!.trim().isEmpty
@@ -89,41 +98,36 @@ class _UpdateScreenState extends State<UpdateScreen> {
                                 : null,
                         hintText: "Phone Number",
                         suffixIcon: Icons.phone,
-                        controller: Controller.phoneController,
+                        controller: phoneController,
                       ),
                       CustomeTextFieldForm(
                         validator: (value) =>
                             value!.trim().isEmpty ? "Enter Your Adress" : null,
                         hintText: "Adress",
                         suffixIcon: Icons.location_on,
-                        controller: Controller.adressController,
+                        controller: adressController,
                       ),
                     ],
                   )),
               CustomeButton(
                 title: 'Update User',
-                onTap: () {
+                onTap: () async {
                   if (_formKey.currentState!.validate()) {
-                    DBHelper.updateUser(
-                            name: Controller.nameController.text
-                                .trim()
-                                .toString(),
-                            phone: Controller.phoneController.text
-                                .trim()
-                                .toString(),
-                            email: Controller.emailController.text
-                                .trim()
-                                .toString(),
-                            adress: Controller.adressController.text
-                                .trim()
-                                .toString(),
-                            id: widget.id)
-                        .then((value) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => UsersScreen()));
-                    });
+                    await UserDB.updateUser(
+                            UserModel(
+                              // id: widget.userModel.id!.toInt(),
+                              name: nameController.text.trim().toString(),
+                              phone: phoneController.text.trim().toString(),
+                              email: emailController.text.trim().toString(),
+                              adress: adressController.text.trim().toString(),
+                              createAt: DateTime.now().toString(),
+                            ),
+                            widget.userModel.id!.toInt())
+                        .then((value) => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const UsersScreen(),
+                            )));
                   }
                 },
               )
@@ -133,19 +137,4 @@ class _UpdateScreenState extends State<UpdateScreen> {
       ),
     );
   }
-}
-
-class Controller {
-  static final nameController = TextEditingController();
-  static final emailController = TextEditingController();
-  static final phoneController = TextEditingController();
-  static final adressController = TextEditingController();
-  static final idController = TextEditingController();
-}
-
-class Validate {
-  static final RegExp nameRegExp = RegExp(r"^\b([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+");
-  static final RegExp emailRegExp = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
-  static final RegExp phoneRegExp =
-      RegExp(r"^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$");
 }

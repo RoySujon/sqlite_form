@@ -8,7 +8,6 @@ class CustomeTextFieldForm extends StatelessWidget {
     this.suffixIcon,
     this.validator,
   });
-
   final TextEditingController controller;
   final String? hintText;
   final IconData? suffixIcon;
@@ -24,7 +23,7 @@ class CustomeTextFieldForm extends StatelessWidget {
         decoration: InputDecoration(
             border: OutlineInputBorder(),
             hintText: hintText,
-            suffixIcon: Icon(suffixIcon)),
+            prefixIcon: Icon(suffixIcon)),
       ),
     );
   }

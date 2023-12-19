@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sqlite_form/services/form_db_helper.dart';
+import 'package:sqlite_form/models/user_model.dart';
+import 'package:sqlite_form/services/user_db.dart';
 import 'package:sqlite_form/ui/form/upate_form.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -21,6 +22,18 @@ class _UsersScreenState extends State<UsersScreen> {
   // void initState() {
   //   super.initState();
   // }
+  List<UserModel> newList = [];
+
+  _getUser() async {
+    final userList = await UserDB.getUsers();
+    setState(() => newList = userList);
+  }
+
+  @override
+  void initState() {
+    _getUser();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,24 +43,31 @@ class _UsersScreenState extends State<UsersScreen> {
         children: [
           Expanded(
               child: FutureBuilder(
-            future: DBHelper.getUsers(),
+            future: UserDB.getUsers(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return ListView.builder(
                     itemBuilder: (context, index) => ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => UpdateScreen(
+                                          userModel: snapshot.data![index],
+                                        )));
+                          },
                           trailing: IconButton(
                               onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => UpdateScreen(
-                                              id: snapshot.data![index]['id'],
-                                            )));
+                                UserDB.deleteUser(
+                                        snapshot.data![index].id.toString())
+                                    .then((value) {
+                                  setState(() {});
+                                });
                               },
-                              icon: Icon(Icons.edit)),
-                          title: Text(snapshot.data![index]['name'].toString()),
+                              icon: Icon(Icons.delete)),
+                          title: Text(snapshot.data![index].name.toString()),
                           subtitle:
-                              Text(snapshot.data![index]['phone'].toString()),
+                              Text(snapshot.data![index].createAt.toString()),
                         ),
                     itemCount: snapshot.data!.length);
               } else {
